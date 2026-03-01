@@ -1,0 +1,135 @@
+/**
+ * Job Notification App — Shared Top Navigation
+ * Clean, minimal. Active link: deep red underline. No flashy effects.
+ */
+
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.nav-link {
+  font-family: var(--font-sans);
+  font-size: var(--text-size-body);
+  font-weight: 500;
+  color: var(--color-text);
+  text-decoration: none;
+  padding-bottom: var(--space-1);
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--color-text);
+}
+
+.nav-link.is-active {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+/* Hamburger (hidden on desktop) */
+.topbar__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.topbar__menu-btn:hover {
+  border-color: rgba(17, 17, 17, 0.25);
+}
+
+.topbar__menu-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.topbar__menu-btn-icon {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background-color: var(--color-text);
+  box-shadow: 0 var(--space-1) 0 0 var(--color-text), 0 calc(var(--space-1) * 2) 0 0 var(--color-text);
+}
+
+.topbar__menu-btn-icon::before,
+.topbar__menu-btn-icon::after {
+  display: none;
+}
+
+/* Mobile: hide nav links, show hamburger */
+@media (max-width: 768px) {
+  .topbar__nav {
+    display: none;
+  }
+
+  .topbar__nav.is-open {
+    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: var(--space-2);
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 10;
+  }
+    align-items: stretch;
+    gap: 0;
+    padding: var(--space-2);
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 10;
+  }
+
+  .topbar__nav.is-open .nav-link {
+    padding: var(--space-2);
+    border-bottom: none;
+    border-left: 3px solid transparent;
+  }
+
+  .topbar__nav.is-open .nav-link.is-active {
+    border-left-color: var(--color-accent);
+  }
+
+  .topbar__menu-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .topbar__menu-btn-icon {
+    margin: 0;
+  }
+
+  .topbar__menu-btn-icon::before,
+  .topbar__menu-btn-icon::after {
+    margin-top: 0;
+  }
+}
+
+/* Desktop: ensure topbar has space for nav */
+.topbar {
+  position: relative;
+}
+
+@media (min-width: 769px) {
+  .topbar__nav-wrap {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    margin: 0 var(--space-3);
+  }
+}

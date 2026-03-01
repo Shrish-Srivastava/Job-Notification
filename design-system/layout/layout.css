@@ -69,6 +69,18 @@
   padding-right: var(--space-4);
 }
 
+/* Route placeholder view (full-width content) */
+.route-view {
+  flex: 1;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.route-view .context-header {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .context-header__title {
   font-family: var(--font-serif);
   font-size: var(--text-size-h1);
