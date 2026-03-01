@@ -1,0 +1,9 @@
+{
+  "name": "job-notification-tracker",
+  "version": "1.0.0",
+  "description": "Job Notification Tracker - Premium SaaS design system",
+  "scripts": {
+    "dev": "npx serve . -l 3000",
+    "start": "npx serve . -l 3000"
+  }
+}

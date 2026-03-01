@@ -695,3 +695,106 @@ select.input[multiple] {
   color: #fff;
   border-color: var(--color-success);
 }
+
+/* ─── Test Checklist ─────────────────────────────────────────────── */
+.test-checklist-view {
+  max-width: var(--text-max-width);
+}
+
+.test-summary {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.test-summary__count {
+  font-size: var(--text-size-h3);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.test-warning {
+  margin-top: var(--space-2);
+  font-size: var(--text-size-body);
+  color: var(--color-warning);
+}
+
+.test-actions {
+  margin-bottom: var(--space-4);
+}
+
+.test-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.test-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+  cursor: pointer;
+}
+
+.test-item:hover {
+  border-color: rgba(17, 17, 17, 0.2);
+}
+
+.test-checkbox {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.test-item__label {
+  flex: 1;
+  font-size: var(--text-size-body);
+  color: var(--color-text);
+}
+
+.test-item__hint {
+  font-size: var(--text-size-xs);
+  color: var(--color-text-muted);
+  cursor: help;
+}
+
+/* ─── Ship View ──────────────────────────────────────────────────── */
+.ship-view {
+  max-width: var(--text-max-width);
+}
+
+.ship-locked {
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+}
+
+.ship-locked__message {
+  font-size: var(--text-size-body);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+}
+
+.ship-ready {
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  text-align: center;
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+}
+
+.ship-ready__message {
+  font-size: var(--text-size-body);
+  color: var(--color-success);
+}

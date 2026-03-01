@@ -9,6 +9,20 @@
   var DIGEST_PREFIX = 'jobTrackerDigest_';
   var STATUS_KEY = 'jobTrackerStatus';
   var STATUS_HISTORY_KEY = 'jobTrackerStatusHistory';
+  var TEST_STATUS_KEY = 'jobTrackerTestStatus';
+
+  var TEST_ITEMS = [
+    { id: 't1', label: 'Preferences persist after refresh', tooltip: 'Save preferences in Settings, refresh, confirm form is prefilled.' },
+    { id: 't2', label: 'Match score calculates correctly', tooltip: 'Set preferences, check dashboard job cards show match badges.' },
+    { id: 't3', label: '"Show only matches" toggle works', tooltip: 'Enable toggle on dashboard, verify only jobs above threshold show.' },
+    { id: 't4', label: 'Save job persists after refresh', tooltip: 'Save a job, go to Saved, refresh, confirm job still appears.' },
+    { id: 't5', label: 'Apply opens in new tab', tooltip: 'Click Apply on a job card, verify link opens in new tab.' },
+    { id: 't6', label: 'Status update persists after refresh', tooltip: 'Change job status to Applied, refresh, confirm status is preserved.' },
+    { id: 't7', label: 'Status filter works correctly', tooltip: 'Set a job to Applied, filter by Applied, confirm only that job shows.' },
+    { id: 't8', label: 'Digest generates top 10 by score', tooltip: 'Generate digest, verify 10 jobs sorted by match score.' },
+    { id: 't9', label: 'Digest persists for the day', tooltip: 'Generate digest, refresh, confirm digest still shows.' },
+    { id: 't10', label: 'No console errors on main pages', tooltip: 'Navigate Dashboard, Saved, Digest, Settings. Open DevTools console, confirm no errors.' }
+  ];
 
   var DEFAULT_PREFS = {
     roleKeywords: '',
@@ -139,6 +153,39 @@
     } catch (e) {
       return [];
     }
+  }
+
+  /* ─── Test Checklist (localStorage) ──────────────────────────────── */
+  function getTestStatus() {
+    try {
+      var raw = localStorage.getItem(TEST_STATUS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function setTestItem(id, checked) {
+    var map = getTestStatus();
+    map[id] = !!checked;
+    try {
+      localStorage.setItem(TEST_STATUS_KEY, JSON.stringify(map));
+    } catch (e) {}
+  }
+
+  function getTestPassedCount() {
+    var map = getTestStatus();
+    return TEST_ITEMS.filter(function (t) { return map[t.id]; }).length;
+  }
+
+  function areAllTestsPassed() {
+    return getTestPassedCount() === TEST_ITEMS.length;
+  }
+
+  function clearTestStatus() {
+    try {
+      localStorage.removeItem(TEST_STATUS_KEY);
+    } catch (e) {}
   }
 
   /* ─── Toast ─────────────────────────────────────────────────────── */
@@ -717,6 +764,64 @@
     );
   }
 
+  /* ─── Test Checklist View ────────────────────────────────────────── */
+  function viewTestChecklist() {
+    var map = getTestStatus();
+    var passed = getTestPassedCount();
+    var total = TEST_ITEMS.length;
+    var warningHtml = passed < total ? '<p class="test-warning">Resolve all issues before shipping.</p>' : '';
+    var itemsHtml = TEST_ITEMS.map(function (t) {
+      var checked = map[t.id] ? ' checked' : '';
+      return (
+        '<label class="test-item" title="' + escapeHtml(t.tooltip) + '">' +
+          '<input type="checkbox" class="test-checkbox" data-test-id="' + escapeHtml(t.id) + '"' + checked + '>' +
+          '<span class="test-item__label">' + escapeHtml(t.label) + '</span>' +
+          '<span class="test-item__hint">How to test</span>' +
+        '</label>'
+      );
+    }).join('');
+    return (
+      '<section class="route-view__content test-checklist-view">' +
+        '<h1 class="context-header__title">Test Checklist</h1>' +
+        '<p class="context-header__subtext">Verify all features before shipping.</p>' +
+        '<div class="test-summary">' +
+          '<span class="test-summary__count">Tests Passed: ' + passed + ' / ' + total + '</span>' +
+          warningHtml +
+        '</div>' +
+        '<div class="test-actions">' +
+          '<button type="button" class="btn btn--secondary" id="test-reset">Reset Test Status</button>' +
+        '</div>' +
+        '<div class="test-list">' + itemsHtml + '</div>' +
+      '</section>'
+    );
+  }
+
+  /* ─── Ship View ──────────────────────────────────────────────────── */
+  function viewShip() {
+    var allPassed = areAllTestsPassed();
+    if (!allPassed) {
+      return (
+        '<section class="route-view__content ship-view">' +
+          '<h1 class="context-header__title">Ship</h1>' +
+          '<p class="context-header__subtext">Deploy your Job Notification Tracker.</p>' +
+          '<div class="ship-locked">' +
+            '<p class="ship-locked__message">Complete all tests before shipping.</p>' +
+            '<a class="btn btn--primary" href="/jt/07-test" data-path="/jt/07-test">Go to Test Checklist</a>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+    return (
+      '<section class="route-view__content ship-view">' +
+        '<h1 class="context-header__title">Ship</h1>' +
+        '<p class="context-header__subtext">All tests passed. Ready to deploy.</p>' +
+        '<div class="ship-ready">' +
+          '<p class="ship-ready__message">All 10 tests passed. You may proceed with deployment.</p>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
   /* ─── Dashboard Filters ─────────────────────────────────────────── */
   var dashboardFilters = {};
 
@@ -857,6 +962,30 @@
     }
   }
 
+  /* ─── Test Checklist mount ─────────────────────────────────────── */
+  function attachTestChecklistListeners() {
+    var root = document.getElementById('root');
+    if (!root) return;
+
+    root.querySelectorAll('.test-checkbox').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var id = cb.getAttribute('data-test-id');
+        if (id) {
+          setTestItem(id, cb.checked);
+          render();
+        }
+      });
+    });
+
+    var resetBtn = root.querySelector('#test-reset');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        clearTestStatus();
+        render();
+      });
+    }
+  }
+
   /* ─── Digest mount ──────────────────────────────────────────────── */
   function attachDigestListeners() {
     var root = document.getElementById('root');
@@ -924,7 +1053,13 @@
       title: 'Settings',
       mount: function () { attachSettingsListeners(); }
     },
-    '/proof': { view: function () { return viewProof(); }, title: 'Proof' }
+    '/proof': { view: function () { return viewProof(); }, title: 'Proof' },
+    '/jt/07-test': {
+      view: function () { return viewTestChecklist(); },
+      title: 'Test Checklist',
+      mount: function () { attachTestChecklistListeners(); }
+    },
+    '/jt/08-ship': { view: function () { return viewShip(); }, title: 'Ship' }
   };
 
   function render() {
