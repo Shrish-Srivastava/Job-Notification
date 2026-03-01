@@ -77,6 +77,14 @@
   border-color: var(--color-border-focus);
 }
 
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23111111' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: 40px;
+}
+
 .input-group {
   display: flex;
   flex-direction: column;
@@ -87,6 +95,12 @@
   font-size: var(--text-size-xs);
   font-weight: 500;
   color: var(--color-text);
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 /* ─── Cards ─────────────────────────────────────────────────────── */

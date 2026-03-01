@@ -27,6 +27,11 @@
   font-size: var(--text-size-h3);
   font-weight: 500;
   color: var(--color-text);
+  text-decoration: none;
+}
+
+a.topbar__brand:hover {
+  color: var(--color-text);
 }
 
 .topbar__progress {
@@ -79,6 +84,40 @@
 .route-view .context-header {
   padding-left: 0;
   padding-right: 0;
+}
+
+.route-view__content {
+  max-width: var(--text-max-width);
+}
+
+.form-card {
+  margin-top: var(--space-4);
+}
+
+/* ─── Landing Page ───────────────────────────────────────────────── */
+.landing {
+  padding: var(--space-5) 0;
+  max-width: var(--text-max-width);
+}
+
+.landing__headline {
+  font-family: var(--font-serif);
+  font-size: var(--text-size-display);
+  font-weight: 500;
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-2);
+}
+
+.landing__subtext {
+  font-size: var(--text-size-body-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.landing__cta {
+  text-decoration: none;
 }
 
 .context-header__title {

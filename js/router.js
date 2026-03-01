@@ -1,62 +1,151 @@
 /**
- * Job Notification App — Client-side router
- * No full page reloads. Active link updates without flicker.
+ * Job Notification Tracker — Client-side router
+ * No full page reloads. Active link highlighted with deep red underline.
  */
 
 (function () {
-  var PLACEHOLDER_SUBTEXT = 'This section will be built in the next step.';
-
-  var routes = [
-    { path: '/', title: 'Home', pageTitle: 'Home' },
-    { path: '/dashboard', title: 'Dashboard', pageTitle: 'Dashboard' },
-    { path: '/settings', title: 'Settings', pageTitle: 'Settings' },
-    { path: '/saved', title: 'Saved', pageTitle: 'Saved' },
-    { path: '/digest', title: 'Digest', pageTitle: 'Digest' },
-    { path: '/proof', title: 'Proof', pageTitle: 'Proof' }
-  ];
-
   function getPath() {
     return window.location.pathname.replace(/\/$/, '') || '/';
   }
 
-  function findRoute(path) {
-    var normalized = path === '' ? '/' : path;
-    return routes.find(function (r) { return r.path === normalized; }) || null;
+  function navigate(path) {
+    var p = path === '/' ? '/' : path;
+    if (getPath() !== p) {
+      window.history.pushState({}, '', p);
+      render();
+    }
+    closeMobileNav();
   }
 
-  function renderPlaceholder(title, subtext) {
+  function setPageTitle(title) {
+    document.title = title + ' — Job Notification Tracker';
+  }
+
+  /* ─── Views ────────────────────────────────────────────────────── */
+
+  function viewLanding() {
     return (
-      '<section class="context-header">' +
-        '<h1 class="context-header__title">' + escapeHtml(title) + '</h1>' +
-        '<p class="context-header__subtext">' + escapeHtml(subtext) + '</p>' +
+      '<section class="landing">' +
+        '<h1 class="landing__headline">Stop Missing The Right Jobs.</h1>' +
+        '<p class="landing__subtext">Precision-matched job discovery delivered daily at 9AM.</p>' +
+        '<a class="btn btn--primary landing__cta" href="/settings" data-path="/settings">Start Tracking</a>' +
       '</section>'
     );
   }
 
-  function escapeHtml(text) {
-    var div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+  function viewSettings() {
+    return (
+      '<section class="route-view__content">' +
+        '<h1 class="context-header__title">Settings</h1>' +
+        '<p class="context-header__subtext">Configure your job preferences. Changes will be saved in a future step.</p>' +
+        '<div class="card form-card">' +
+          '<div class="form-fields">' +
+            '<div class="input-group">' +
+              '<label class="input-group__label" for="role-keywords">Role keywords</label>' +
+              '<input id="role-keywords" class="input" type="text" placeholder="e.g. Software Engineer, Product Manager">' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<label class="input-group__label" for="locations">Preferred locations</label>' +
+              '<input id="locations" class="input" type="text" placeholder="e.g. New York, San Francisco">' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<label class="input-group__label" for="mode">Mode</label>' +
+              '<select class="input" id="mode">' +
+                '<option value="">Select mode</option>' +
+                '<option value="remote">Remote</option>' +
+                '<option value="hybrid">Hybrid</option>' +
+                '<option value="onsite">Onsite</option>' +
+              '</select>' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<label class="input-group__label" for="experience">Experience level</label>' +
+              '<select class="input" id="experience">' +
+                '<option value="">Select level</option>' +
+                '<option value="entry">Entry</option>' +
+                '<option value="mid">Mid-level</option>' +
+                '<option value="senior">Senior</option>' +
+                '<option value="lead">Lead</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</section>'
+    );
   }
 
-  function setPageTitle(title) {
-    document.title = title + ' — Job Notification App';
+  function viewDashboard() {
+    return (
+      '<section class="route-view__content">' +
+        '<div class="empty-state">' +
+          '<h2 class="empty-state__title">No jobs yet.</h2>' +
+          '<p class="empty-state__message">In the next step, you will load a realistic dataset.</p>' +
+        '</div>' +
+      '</section>'
+    );
   }
+
+  function viewSaved() {
+    return (
+      '<section class="route-view__content">' +
+        '<div class="empty-state">' +
+          '<h2 class="empty-state__title">Saved jobs</h2>' +
+          '<p class="empty-state__message">Jobs you save for later will appear here.</p>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function viewDigest() {
+    return (
+      '<section class="route-view__content">' +
+        '<div class="empty-state">' +
+          '<h2 class="empty-state__title">Daily Digest</h2>' +
+          '<p class="empty-state__message">Your personalized summary, delivered daily at 9AM. This feature will be built in a future step.</p>' +
+        '</div>' +
+      '</section>'
+    );
+  }
+
+  function viewProof() {
+    return (
+      '<section class="context-header">' +
+        '<h1 class="context-header__title">Proof</h1>' +
+        '<p class="context-header__subtext">Artifact collection and verification. This section will be built in a future step.</p>' +
+      '</section>'
+    );
+  }
+
+  function view404() {
+    return (
+      '<section class="context-header">' +
+        '<h1 class="context-header__title">Page Not Found</h1>' +
+        '<p class="context-header__subtext">The page you are looking for does not exist.</p>' +
+      '</section>'
+    );
+  }
+
+  /* ─── Router ───────────────────────────────────────────────────── */
+
+  var routes = {
+    '/': { view: viewLanding, title: 'Job Notification Tracker' },
+    '/dashboard': { view: viewDashboard, title: 'Dashboard' },
+    '/settings': { view: viewSettings, title: 'Settings' },
+    '/saved': { view: viewSaved, title: 'Saved' },
+    '/digest': { view: viewDigest, title: 'Digest' },
+    '/proof': { view: viewProof, title: 'Proof' }
+  };
 
   function render() {
     var path = getPath();
-    var route = findRoute(path);
+    var route = routes[path];
     var root = document.getElementById('root');
     if (!root) return;
 
     if (route) {
-      root.innerHTML = renderPlaceholder(route.pageTitle, PLACEHOLDER_SUBTEXT);
-      setPageTitle(route.pageTitle);
+      root.innerHTML = route.view();
+      setPageTitle(route.title);
     } else {
-      root.innerHTML = renderPlaceholder(
-        'Page Not Found',
-        'The page you are looking for does not exist.'
-      );
+      root.innerHTML = view404();
       setPageTitle('Page Not Found');
     }
 
@@ -67,28 +156,21 @@
     var links = document.querySelectorAll('.nav-link[data-path]');
     links.forEach(function (link) {
       var linkPath = link.getAttribute('data-path');
-      if (linkPath === path) {
-        link.classList.add('is-active');
-      } else {
-        link.classList.remove('is-active');
-      }
+      link.classList.toggle('is-active', linkPath === path);
     });
   }
 
   function handleClick(e) {
     var link = e.target.closest('a[data-path]');
     if (!link) return;
-    if (link.classList.contains('is-active')) {
+    var path = link.getAttribute('data-path');
+    if (!path) return;
+    if (path === getPath()) {
       e.preventDefault();
       return;
     }
-    var path = link.getAttribute('data-path');
-    if (path && path !== getPath()) {
-      e.preventDefault();
-      window.history.pushState({}, '', path === '/' ? '/' : path);
-      render();
-      closeMobileNav();
-    }
+    e.preventDefault();
+    navigate(path);
   }
 
   function closeMobileNav() {
