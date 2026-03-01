@@ -6,6 +6,7 @@
 (function () {
   var SAVED_KEY = 'savedJobIds';
   var PREFS_KEY = 'jobTrackerPreferences';
+  var DIGEST_PREFIX = 'jobTrackerDigest_';
 
   var DEFAULT_PREFS = {
     roleKeywords: '',
@@ -144,6 +145,75 @@
     if (score >= 60) return 'match-badge match-badge--medium';
     if (score >= 40) return 'match-badge match-badge--neutral';
     return 'match-badge match-badge--low';
+  }
+
+  /* ─── Digest Engine ─────────────────────────────────────────────── */
+  function getTodayDateStr() {
+    var d = new Date();
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function getDigestKey(dateStr) {
+    return DIGEST_PREFIX + dateStr;
+  }
+
+  function getDigest(dateStr) {
+    try {
+      var raw = localStorage.getItem(getDigestKey(dateStr || getTodayDateStr()));
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveDigest(dateStr, digest) {
+    try {
+      localStorage.setItem(getDigestKey(dateStr), JSON.stringify(digest));
+    } catch (e) {}
+  }
+
+  function generateDigestData() {
+    var jobs = typeof JOBS !== 'undefined' ? JOBS : [];
+    var prefs = getPreferences();
+    var jobsWithScores = jobs.map(function (j) {
+      return { job: j, matchScore: computeMatchScore(j, prefs) };
+    });
+    jobsWithScores.sort(function (a, b) {
+      if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+      return a.job.postedDaysAgo - b.job.postedDaysAgo;
+    });
+    return jobsWithScores.slice(0, 10);
+  }
+
+  function getOrCreateTodayDigest() {
+    var dateStr = getTodayDateStr();
+    var existing = getDigest(dateStr);
+    if (existing) return existing;
+    var items = generateDigestData();
+    var digest = { date: dateStr, items: items };
+    saveDigest(dateStr, digest);
+    return digest;
+  }
+
+  function digestToPlainText(digest) {
+    if (!digest || !digest.items || digest.items.length === 0) return '';
+    var lines = [
+      'Top 10 Jobs For You — 9AM Digest',
+      digest.date || getTodayDateStr(),
+      ''
+    ];
+    digest.items.forEach(function (item, i) {
+      var j = item.job;
+      lines.push((i + 1) + '. ' + j.title + ' at ' + j.company);
+      lines.push('   Location: ' + j.location + ' | Experience: ' + j.experience + ' | Match: ' + item.matchScore + '%');
+      lines.push('   Apply: ' + j.applyUrl);
+      lines.push('');
+    });
+    lines.push('This digest was generated based on your preferences.');
+    return lines.join('\n');
   }
 
   /* ─── Salary extraction for sorting ─────────────────────────────── */
@@ -446,12 +516,67 @@
   }
 
   function viewDigest() {
+    var prefs = hasPreferences();
+    var todayStr = getTodayDateStr();
+    var digest = getDigest(todayStr);
+
+    if (!prefs) {
+      return (
+        '<section class="route-view__content">' +
+          '<h1 class="context-header__title">Daily Digest</h1>' +
+          '<p class="context-header__subtext">Your personalized summary, delivered daily at 9AM.</p>' +
+          '<div class="digest-blocking">' +
+            '<p class="digest-blocking__message">Set preferences to generate a personalized digest.</p>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    var digestHtml = '';
+    if (digest && digest.items && digest.items.length > 0) {
+      digestHtml = (
+        '<div class="digest-card">' +
+          '<div class="digest-header">' +
+            '<h2 class="digest-header__title">Top 10 Jobs For You — 9AM Digest</h2>' +
+            '<p class="digest-header__date">' + escapeHtml(digest.date || todayStr) + '</p>' +
+          '</div>' +
+          '<div class="digest-body">' +
+            digest.items.map(function (item, i) {
+              var j = item.job;
+              return (
+                '<div class="digest-job">' +
+                  '<h3 class="digest-job__title">' + escapeHtml(j.title) + '</h3>' +
+                  '<p class="digest-job__meta">' + escapeHtml(j.company) + ' · ' + escapeHtml(j.location) + ' · ' + escapeHtml(j.experience) + '</p>' +
+                  '<div class="digest-job__footer">' +
+                    '<span class="' + getMatchBadgeClass(item.matchScore) + '">' + item.matchScore + '%</span>' +
+                    '<a class="btn btn--primary digest-job__apply" href="' + escapeHtml(j.applyUrl) + '" target="_blank" rel="noopener">Apply</a>' +
+                  '</div>' +
+                '</div>'
+              );
+            }).join('') +
+          '</div>' +
+          '<div class="digest-footer">' +
+            '<p class="digest-footer__text">This digest was generated based on your preferences.</p>' +
+            '<div class="digest-actions flex-gap">' +
+              '<button type="button" class="btn btn--secondary" id="digest-copy">Copy Digest to Clipboard</button>' +
+              '<a class="btn btn--secondary" id="digest-email" href="#">Create Email Draft</a>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    } else if (digest && digest.items && digest.items.length === 0) {
+      digestHtml = '<div class="empty-state"><h2 class="empty-state__title">No matching roles today. Check again tomorrow.</h2></div>';
+    } else {
+      digestHtml = '';
+    }
+
     return (
-      '<section class="route-view__content">' +
-        '<div class="empty-state">' +
-          '<h2 class="empty-state__title">Daily Digest</h2>' +
-          '<p class="empty-state__message">Your personalized summary, delivered daily at 9AM. This feature will be built in a future step.</p>' +
-        '</div>' +
+      '<section class="route-view__content digest-view">' +
+        '<h1 class="context-header__title">Daily Digest</h1>' +
+        '<p class="context-header__subtext">Your personalized summary, delivered daily at 9AM.</p>' +
+        '<p class="digest-note">Demo Mode: Daily 9AM trigger simulated manually.</p>' +
+        '<button type="button" class="btn btn--primary digest-generate-btn" id="digest-generate">Generate Today\'s 9AM Digest (Simulated)</button>' +
+        digestHtml +
       '</section>'
     );
   }
@@ -599,6 +724,46 @@
     }
   }
 
+  /* ─── Digest mount ──────────────────────────────────────────────── */
+  function attachDigestListeners() {
+    var root = document.getElementById('root');
+    if (!root) return;
+
+    var genBtn = root.querySelector('#digest-generate');
+    if (genBtn) {
+      genBtn.addEventListener('click', function () {
+        getOrCreateTodayDigest();
+        render();
+      });
+    }
+
+    var copyBtn = root.querySelector('#digest-copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var digest = getDigest(getTodayDateStr());
+        var text = digestToPlainText(digest);
+        if (text) {
+          navigator.clipboard.writeText(text).then(function () {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(function () { copyBtn.textContent = 'Copy Digest to Clipboard'; }, 2000);
+          }).catch(function () {});
+        }
+      });
+    }
+
+    var emailLink = root.querySelector('#digest-email');
+    if (emailLink) {
+      emailLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        var digest = getDigest(getTodayDateStr());
+        var body = digestToPlainText(digest);
+        var subject = 'My 9AM Job Digest';
+        var mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        window.location.href = mailto;
+      });
+    }
+  }
+
   /* ─── Router ───────────────────────────────────────────────────── */
 
   var routes = {
@@ -616,7 +781,11 @@
       title: 'Saved',
       mount: function () { attachJobCardListeners(); }
     },
-    '/digest': { view: function () { return viewDigest(); }, title: 'Digest' },
+    '/digest': {
+      view: function () { return viewDigest(); },
+      title: 'Digest',
+      mount: function () { attachDigestListeners(); }
+    },
     '/settings': {
       view: function () { return viewSettings(); },
       title: 'Settings',
