@@ -1,0 +1,179 @@
+/**
+ * Job Notification App — Component Styles
+ * Buttons, inputs, cards. Consistent, predictable.
+ */
+
+/* ─── Utilities ─────────────────────────────────────────────────── */
+.flex-gap {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ─── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-size-body);
+  font-weight: 500;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition), color var(--transition);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn--primary {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.btn--primary:hover {
+  background-color: #6d0000;
+}
+
+.btn--secondary {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn--secondary:hover {
+  border-color: var(--color-text);
+}
+
+/* ─── Inputs ────────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-size-body);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: border-color var(--transition-fast);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input:hover {
+  border-color: rgba(17, 17, 17, 0.2);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.input-group__label {
+  font-size: var(--text-size-xs);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* ─── Cards ─────────────────────────────────────────────────────── */
+.card {
+  padding: var(--space-3);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.card + .card {
+  margin-top: var(--space-2);
+}
+
+.card__title {
+  font-size: var(--text-size-h3);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+/* ─── Copyable Prompt Box ───────────────────────────────────────── */
+.prompt-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-top: var(--space-2);
+}
+
+.prompt-box__content {
+  font-family: var(--font-sans);
+}
+
+.prompt-box__copy {
+  align-self: flex-end;
+}
+
+/* ─── Error State ───────────────────────────────────────────────── */
+.error-state {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.error-state__title {
+  font-size: var(--text-size-h3);
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+  color: var(--color-text);
+}
+
+.error-state__message {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.error-state__action {
+  margin-top: var(--space-2);
+}
+
+/* ─── Empty State ───────────────────────────────────────────────── */
+.empty-state {
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.empty-state__title {
+  font-size: var(--text-size-h3);
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.empty-state__message {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+  max-width: var(--text-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.empty-state__action {
+  margin-top: var(--space-2);
+}

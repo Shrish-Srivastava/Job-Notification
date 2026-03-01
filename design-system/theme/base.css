@@ -1,0 +1,76 @@
+/**
+ * Job Notification App — Base Styles
+ * Reset, typography, and global defaults.
+ */
+
+/* ─── Font imports ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
+
+/* ─── Reset ───────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  min-height: 100vh;
+}
+
+/* ─── Typography ───────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+h1 { font-size: var(--text-size-h1); letter-spacing: -0.02em; }
+h2 { font-size: var(--text-size-h2); }
+h3 { font-size: var(--text-size-h3); }
+
+.text-display {
+  font-size: var(--text-size-display);
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: var(--line-height-tight);
+}
+
+.text-body {
+  font-size: var(--text-size-body);
+  line-height: var(--line-height-body);
+  max-width: var(--text-max-width);
+}
+
+.text-body-lg {
+  font-size: var(--text-size-body-lg);
+  line-height: var(--line-height-relaxed);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+/* ─── Focus states (accessibility) ──────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ─── Selection ────────────────────────────────────────────────── */
+::selection {
+  background-color: rgba(139, 0, 0, 0.15);
+}

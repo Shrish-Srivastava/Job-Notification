@@ -1,0 +1,58 @@
+/**
+ * Job Notification App — Design Tokens
+ * Premium SaaS design system foundation.
+ * Maximum 4 colors. No gradients. Calm, intentional, confident.
+ */
+
+:root {
+  /* ─── Color Palette ───────────────────────────────────────────── */
+  --color-bg: #F7F6F3;
+  --color-text: #111111;
+  --color-accent: #8B0000;
+  --color-success: #5a6b5a;
+  --color-warning: #8B7355;
+
+  /* Semantic aliases */
+  --color-border: rgba(17, 17, 17, 0.12);
+  --color-border-focus: #8B0000;
+  --color-text-muted: rgba(17, 17, 17, 0.65);
+
+  /* ─── Typography ──────────────────────────────────────────────── */
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --text-size-xs: 14px;
+  --text-size-body: 16px;
+  --text-size-body-lg: 18px;
+  --text-size-h3: 20px;
+  --text-size-h2: 24px;
+  --text-size-h1: 32px;
+  --text-size-display: 40px;
+
+  --line-height-tight: 1.4;
+  --line-height-body: 1.6;
+  --line-height-relaxed: 1.8;
+
+  --text-max-width: 720px;
+
+  /* ─── Spacing Scale (strict) ──────────────────────────────────── */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 40px;
+  --space-5: 64px;
+
+  /* ─── Border Radius ───────────────────────────────────────────── */
+  --radius: 6px;
+
+  /* ─── Transitions ─────────────────────────────────────────────── */
+  --transition-fast: 150ms ease-in-out;
+  --transition: 200ms ease-in-out;
+
+  /* ─── Layout ─────────────────────────────────────────────────── */
+  --topbar-height: 56px;
+  --context-header-padding: var(--space-4) 0;
+  --workspace-ratio: 70%;
+  --panel-ratio: 30%;
+  --footer-padding: var(--space-4) 0;
+}

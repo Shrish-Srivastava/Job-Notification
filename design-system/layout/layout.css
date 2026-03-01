@@ -1,0 +1,167 @@
+/**
+ * Job Notification App — Layout Structure
+ * Top Bar → Context Header → Workspace + Panel → Proof Footer
+ */
+
+/* ─── App Shell ─────────────────────────────────────────────────── */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ─── Top Bar ───────────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--topbar-height);
+  padding: 0 var(--space-3);
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.topbar__brand {
+  font-family: var(--font-serif);
+  font-size: var(--text-size-h3);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.topbar__progress {
+  font-family: var(--font-sans);
+  font-size: var(--text-size-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.topbar__status {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-size-xs);
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+}
+
+.topbar__status--shipped {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.topbar__status--in-progress {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.topbar__status--not-started {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ─── Context Header ────────────────────────────────────────────── */
+.context-header {
+  padding: var(--context-header-padding);
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.context-header__title {
+  font-family: var(--font-serif);
+  font-size: var(--text-size-h1);
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+}
+
+.context-header__subtext {
+  font-size: var(--text-size-body);
+  color: var(--color-text-muted);
+  max-width: var(--text-max-width);
+}
+
+/* ─── Main Content Area ─────────────────────────────────────────── */
+.main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Primary Workspace ────────────────────────────────────────── */
+.workspace {
+  flex: 0 0 var(--workspace-ratio);
+  padding: var(--space-3) var(--space-4);
+  overflow-y: auto;
+}
+
+/* ─── Secondary Panel ─────────────────────────────────────────── */
+.panel {
+  flex: 0 0 var(--panel-ratio);
+  padding: var(--space-3) var(--space-4);
+  border-left: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  overflow-y: auto;
+}
+
+.panel__title {
+  font-size: var(--text-size-h3);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.panel__content {
+  font-size: var(--text-size-body);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-relaxed);
+}
+
+/* ─── Proof Footer ──────────────────────────────────────────────── */
+.proof-footer {
+  padding: var(--footer-padding);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+}
+
+.proof-footer__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  list-style: none;
+}
+
+.proof-footer__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-size-body);
+  color: var(--color-text-muted);
+}
+
+.proof-footer__item--done {
+  color: var(--color-success);
+}
+
+.proof-footer__checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.proof-footer__item--done .proof-footer__checkbox {
+  border-color: var(--color-success);
+  background-color: var(--color-success);
+}
+
+.proof-footer__item--done .proof-footer__checkbox::after {
+  content: '✓';
+  color: var(--color-bg);
+  font-size: 12px;
+  font-weight: 600;
+}

@@ -1,0 +1,9 @@
+/**
+ * Job Notification App — Design System
+ * Import this file to apply the full design system.
+ */
+
+@import './theme/tokens.css';
+@import './theme/base.css';
+@import './layout/layout.css';
+@import './components/components.css';

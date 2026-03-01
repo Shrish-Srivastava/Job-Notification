@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Notification App — Design System</title>
+  <link rel="stylesheet" href="design-system/index.css">
+</head>
+<body class="app">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <span class="topbar__brand">Job Notification App</span>
+    <span class="topbar__progress">Step 1 / 4</span>
+    <span class="topbar__status topbar__status--in-progress">In Progress</span>
+  </header>
+
+  <!-- Context Header -->
+  <section class="context-header">
+    <h1 class="context-header__title">Design System Foundation</h1>
+    <p class="context-header__subtext">Calm, intentional, confident. No flash. No noise.</p>
+  </section>
+
+  <!-- Main: Workspace + Panel -->
+  <main class="main">
+    <div class="workspace">
+      <div class="card">
+        <h3 class="card__title">Primary Workspace</h3>
+        <p class="text-body text-muted">Clean cards with subtle borders. Predictable components. No crowding. Generous spacing using the strict scale: 8px, 16px, 24px, 40px, 64px.</p>
+      </div>
+      <div class="card">
+        <h3 class="card__title">Buttons</h3>
+        <div class="flex-gap">
+          <button class="btn btn--primary">Primary Action</button>
+          <button class="btn btn--secondary">Secondary</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card__title">Input</h3>
+        <div class="input-group">
+          <label class="input-group__label" for="demo-input">Label</label>
+          <input id="demo-input" class="input" type="text" placeholder="Placeholder text">
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <h3 class="panel__title">Step Explanation</h3>
+      <p class="panel__content">This panel provides context for the current step. Copyable prompts and helper content live here.</p>
+      <div class="prompt-box">
+        <pre class="prompt-box__content">// Example copyable code or prompt</pre>
+        <button class="btn btn--secondary prompt-box__copy">Copy</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Proof Footer -->
+  <footer class="proof-footer">
+    <ul class="proof-footer__list">
+      <li class="proof-footer__item proof-footer__item--done">
+        <span class="proof-footer__checkbox"></span>
+        UI Built
+      </li>
+      <li class="proof-footer__item">
+        <span class="proof-footer__checkbox"></span>
+        Logic Working
+      </li>
+      <li class="proof-footer__item">
+        <span class="proof-footer__checkbox"></span>
+        Test Passed
+      </li>
+      <li class="proof-footer__item">
+        <span class="proof-footer__checkbox"></span>
+        Deployed
+      </li>
+    </ul>
+  </footer>
+</body>
+</html>
