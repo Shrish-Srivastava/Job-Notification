@@ -580,3 +580,118 @@ select.input[multiple] {
 .digest-actions {
   margin-top: var(--space-2);
 }
+
+.digest-recent-updates {
+  margin-top: var(--space-4);
+}
+
+.digest-recent-updates .digest-header__title {
+  margin-bottom: var(--space-2);
+}
+
+.digest-job--update .digest-job__footer {
+  margin-top: var(--space-1);
+}
+
+.digest-job__date {
+  font-size: var(--text-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* ─── Toast ──────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-text);
+  color: var(--color-bg);
+  font-size: var(--text-size-body);
+  font-weight: 500;
+  border-radius: var(--radius);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 200ms ease-in-out, transform 200ms ease-in-out;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─── Job Status ─────────────────────────────────────────────────── */
+.job-card__status-row {
+  margin-top: var(--space-2);
+}
+
+.job-card__status {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  cursor: pointer;
+  min-width: 120px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23111111' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-2) center;
+  padding-right: 28px;
+}
+
+.status-badge {
+  display: inline-flex;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius);
+}
+
+.status-badge--neutral {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.status-badge--applied {
+  background-color: #4a6fa5;
+  color: #fff;
+  border: 1px solid #4a6fa5;
+}
+
+.status-badge--rejected {
+  background-color: var(--color-accent);
+  color: #fff;
+  border: 1px solid var(--color-accent);
+}
+
+.status-badge--selected {
+  background-color: var(--color-success);
+  color: #fff;
+  border: 1px solid var(--color-success);
+}
+
+.job-card__status.status-badge--neutral {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.job-card__status.status-badge--applied {
+  background-color: #4a6fa5;
+  color: #fff;
+  border-color: #4a6fa5;
+}
+
+.job-card__status.status-badge--rejected {
+  background-color: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.job-card__status.status-badge--selected {
+  background-color: var(--color-success);
+  color: #fff;
+  border-color: var(--color-success);
+}
