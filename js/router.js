@@ -1,10 +1,20 @@
 /**
- * Job Notification Tracker — Client-side router & dashboard logic
- * No full page reloads. Jobs, filtering, saved state, modal.
+ * Job Notification Tracker — Router, preferences, match scoring
+ * No full page reloads. Deterministic match score engine.
  */
 
 (function () {
   var SAVED_KEY = 'savedJobIds';
+  var PREFS_KEY = 'jobTrackerPreferences';
+
+  var DEFAULT_PREFS = {
+    roleKeywords: '',
+    preferredLocations: [],
+    preferredMode: [],
+    experienceLevel: '',
+    skills: '',
+    minMatchScore: 40
+  };
 
   function getPath() {
     return window.location.pathname.replace(/\/$/, '') || '/';
@@ -21,6 +31,36 @@
 
   function setPageTitle(title) {
     document.title = title + ' — Job Notification Tracker';
+  }
+
+  /* ─── Preferences (localStorage) ────────────────────────────────── */
+  function getPreferences() {
+    try {
+      var raw = localStorage.getItem(PREFS_KEY);
+      if (!raw) return null;
+      var p = JSON.parse(raw);
+      return {
+        roleKeywords: p.roleKeywords || '',
+        preferredLocations: Array.isArray(p.preferredLocations) ? p.preferredLocations : [],
+        preferredMode: Array.isArray(p.preferredMode) ? p.preferredMode : [],
+        experienceLevel: p.experienceLevel || '',
+        skills: p.skills || '',
+        minMatchScore: typeof p.minMatchScore === 'number' ? Math.max(0, Math.min(100, p.minMatchScore)) : 40
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function hasPreferences() {
+    var p = getPreferences();
+    return p !== null && (p.roleKeywords || p.preferredLocations.length > 0 || p.preferredMode.length > 0 || p.experienceLevel || p.skills);
+  }
+
+  function savePreferences(prefs) {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    } catch (e) {}
   }
 
   /* ─── Saved Jobs (localStorage) ─────────────────────────────────── */
@@ -50,30 +90,99 @@
     return getSavedIds().indexOf(id) >= 0;
   }
 
+  /* ─── Match Score Engine (deterministic) ─────────────────────────── */
+  function computeMatchScore(job, prefs) {
+    if (!prefs) return 0;
+    var score = 0;
+
+    var roleKeywords = (prefs.roleKeywords || '').split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+    var userSkills = (prefs.skills || '').split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+    var titleLower = (job.title || '').toLowerCase();
+    var descLower = (job.description || '').toLowerCase();
+
+    if (roleKeywords.length > 0) {
+      var anyInTitle = roleKeywords.some(function (kw) { return kw && titleLower.indexOf(kw) >= 0; });
+      var anyInDesc = roleKeywords.some(function (kw) { return kw && descLower.indexOf(kw) >= 0; });
+      if (anyInTitle) score += 25;
+      if (anyInDesc) score += 15;
+    }
+
+    if (prefs.preferredLocations && prefs.preferredLocations.length > 0) {
+      var locMatch = prefs.preferredLocations.some(function (loc) {
+        return (job.location || '').toLowerCase() === (loc || '').toLowerCase();
+      });
+      if (locMatch) score += 15;
+    }
+
+    if (prefs.preferredMode && prefs.preferredMode.length > 0) {
+      var modeMatch = prefs.preferredMode.some(function (m) {
+        return (job.mode || '').toLowerCase() === (m || '').toLowerCase();
+      });
+      if (modeMatch) score += 10;
+    }
+
+    if (prefs.experienceLevel && (job.experience || '').toLowerCase() === (prefs.experienceLevel || '').toLowerCase()) {
+      score += 10;
+    }
+
+    if (userSkills.length > 0 && job.skills && Array.isArray(job.skills)) {
+      var jobSkillsLower = job.skills.map(function (s) { return (s || '').toLowerCase(); });
+      var skillMatch = userSkills.some(function (us) {
+        return jobSkillsLower.some(function (js) { return js.indexOf(us) >= 0 || us.indexOf(js) >= 0; });
+      });
+      if (skillMatch) score += 15;
+    }
+
+    if ((job.postedDaysAgo || 999) <= 2) score += 5;
+    if ((job.source || '').toLowerCase() === 'linkedin') score += 5;
+
+    return Math.min(100, score);
+  }
+
+  function getMatchBadgeClass(score) {
+    if (score >= 80) return 'match-badge match-badge--high';
+    if (score >= 60) return 'match-badge match-badge--medium';
+    if (score >= 40) return 'match-badge match-badge--neutral';
+    return 'match-badge match-badge--low';
+  }
+
+  /* ─── Salary extraction for sorting ─────────────────────────────── */
+  function extractSalaryValue(salaryRange) {
+    if (!salaryRange) return 0;
+    var m = salaryRange.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
   /* ─── Filtering ─────────────────────────────────────────────────── */
-  function filterJobs(jobs, filters) {
+  function filterJobs(jobsWithScores, filters, prefs) {
     var keyword = (filters.keyword || '').toLowerCase().trim();
     var location = (filters.location || '').toLowerCase();
     var mode = (filters.mode || '').toLowerCase();
     var experience = (filters.experience || '').toLowerCase();
     var source = (filters.source || '').toLowerCase();
     var sort = (filters.sort || 'latest').toLowerCase();
+    var aboveThreshold = filters.aboveThreshold === true;
+    var minScore = (prefs && typeof prefs.minMatchScore === 'number') ? prefs.minMatchScore : 40;
 
-    var out = jobs.filter(function (j) {
+    var out = jobsWithScores.filter(function (item) {
+      var j = item.job;
       if (keyword) {
         var match = (j.title + ' ' + j.company).toLowerCase().indexOf(keyword) >= 0;
         if (!match) return false;
       }
-      if (location && j.location.toLowerCase() !== location.toLowerCase()) return false;
-      if (mode && j.mode.toLowerCase() !== mode.toLowerCase()) return false;
-      if (experience && j.experience.toLowerCase() !== experience.toLowerCase()) return false;
-      if (source && j.source.toLowerCase() !== source.toLowerCase()) return false;
+      if (location && j.location.toLowerCase() !== location) return false;
+      if (mode && j.mode.toLowerCase() !== mode) return false;
+      if (experience && j.experience.toLowerCase() !== experience) return false;
+      if (source && j.source.toLowerCase() !== source) return false;
+      if (aboveThreshold && item.matchScore < minScore) return false;
       return true;
     });
 
     out.sort(function (a, b) {
-      if (sort === 'oldest') return b.postedDaysAgo - a.postedDaysAgo;
-      return a.postedDaysAgo - b.postedDaysAgo;
+      if (sort === 'match') return b.matchScore - a.matchScore;
+      if (sort === 'salary') return extractSalaryValue(b.job.salaryRange) - extractSalaryValue(a.job.salaryRange);
+      if (sort === 'oldest') return b.job.postedDaysAgo - a.job.postedDaysAgo;
+      return a.job.postedDaysAgo - b.job.postedDaysAgo;
     });
 
     return out;
@@ -125,10 +234,13 @@
   }
 
   /* ─── Job Card HTML ─────────────────────────────────────────────── */
-  function jobCardHtml(job, saved, showUnsave) {
+  function jobCardHtml(item, saved, showUnsave) {
+    var job = item.job;
+    var score = item.matchScore;
     var posted = job.postedDaysAgo === 0 ? 'Today' :
       job.postedDaysAgo === 1 ? '1 day ago' : job.postedDaysAgo + ' days ago';
     var saveLabel = showUnsave ? 'Unsave' : 'Save';
+    var scoreBadge = '<span class="' + getMatchBadgeClass(score) + '">' + score + '%</span>';
     return (
       '<div class="job-card" data-job-id="' + escapeHtml(job.id) + '">' +
         '<div class="job-card__header">' +
@@ -136,7 +248,10 @@
             '<h3 class="job-card__title">' + escapeHtml(job.title) + '</h3>' +
             '<p class="job-card__company">' + escapeHtml(job.company) + '</p>' +
           '</div>' +
-          '<span class="source-badge">' + escapeHtml(job.source) + '</span>' +
+          '<div class="job-card__badges">' +
+            scoreBadge +
+            '<span class="source-badge">' + escapeHtml(job.source) + '</span>' +
+          '</div>' +
         '</div>' +
         '<div class="job-card__meta">' +
           escapeHtml(job.location) + ' · ' + escapeHtml(job.mode) + ' · ' + escapeHtml(job.experience) +
@@ -152,8 +267,11 @@
     );
   }
 
+  var prefsForScoring = null;
+
   /* ─── Filter Bar HTML ───────────────────────────────────────────── */
   function filterBarHtml(locations, filters) {
+    var aboveChecked = filters.aboveThreshold ? ' checked' : '';
     return (
       '<div class="filter-bar">' +
         '<input type="text" class="input filter-bar__keyword filter-keyword" placeholder="Search title or company" value="' + escapeHtml(filters.keyword || '') + '">' +
@@ -184,8 +302,14 @@
         '</select>' +
         '<select class="input filter-sort">' +
           '<option value="latest"' + (filters.sort === 'latest' ? ' selected' : '') + '>Latest</option>' +
+          '<option value="match"' + (filters.sort === 'match' ? ' selected' : '') + '>Match Score</option>' +
+          '<option value="salary"' + (filters.sort === 'salary' ? ' selected' : '') + '>Salary</option>' +
           '<option value="oldest"' + (filters.sort === 'oldest' ? ' selected' : '') + '>Oldest</option>' +
         '</select>' +
+      '</div>' +
+      '<div class="toggle-row">' +
+        '<input type="checkbox" id="above-threshold" class="filter-above-threshold"' + aboveChecked + '>' +
+        '<label for="above-threshold">Show only jobs above my threshold</label>' +
       '</div>'
     );
   }
@@ -203,40 +327,63 @@
   }
 
   function viewSettings() {
+    var p = getPreferences() || DEFAULT_PREFS;
+    var roleVal = escapeHtml(p.roleKeywords || '');
+    var skillsVal = escapeHtml(p.skills || '');
+    var expVal = p.experienceLevel || '';
+    var minVal = p.minMatchScore;
+    var locOpts = (typeof JOBS !== 'undefined' ? getUniqueValues(JOBS, 'location') : []).map(function (loc) {
+      var sel = (p.preferredLocations || []).indexOf(loc) >= 0 ? ' selected' : '';
+      return '<option value="' + escapeHtml(loc) + '"' + sel + '>' + escapeHtml(loc) + '</option>';
+    }).join('');
+    var remoteChecked = (p.preferredMode || []).indexOf('Remote') >= 0 ? ' checked' : '';
+    var hybridChecked = (p.preferredMode || []).indexOf('Hybrid') >= 0 ? ' checked' : '';
+    var onsiteChecked = (p.preferredMode || []).indexOf('Onsite') >= 0 ? ' checked' : '';
     return (
       '<section class="route-view__content">' +
         '<h1 class="context-header__title">Settings</h1>' +
-        '<p class="context-header__subtext">Configure your job preferences. Changes will be saved in a future step.</p>' +
+        '<p class="context-header__subtext">Configure your job preferences. Changes are saved automatically.</p>' +
         '<div class="card form-card">' +
           '<div class="form-fields">' +
             '<div class="input-group">' +
-              '<label class="input-group__label" for="role-keywords">Role keywords</label>' +
-              '<input id="role-keywords" class="input" type="text" placeholder="e.g. Software Engineer, Product Manager">' +
+              '<label class="input-group__label" for="role-keywords">Role keywords (comma-separated)</label>' +
+              '<input id="role-keywords" class="input" type="text" placeholder="e.g. Software Engineer, Product Manager" value="' + roleVal + '">' +
             '</div>' +
             '<div class="input-group">' +
-              '<label class="input-group__label" for="locations">Preferred locations</label>' +
-              '<input id="locations" class="input" type="text" placeholder="e.g. New York, San Francisco">' +
-            '</div>' +
-            '<div class="input-group">' +
-              '<label class="input-group__label" for="mode">Mode</label>' +
-              '<select class="input" id="mode">' +
-                '<option value="">Select mode</option>' +
-                '<option value="remote">Remote</option>' +
-                '<option value="hybrid">Hybrid</option>' +
-                '<option value="onsite">Onsite</option>' +
+              '<label class="input-group__label" for="preferred-locations">Preferred locations (hold Ctrl/Cmd to multi-select)</label>' +
+              '<select id="preferred-locations" class="input" multiple>' +
+                locOpts +
               '</select>' +
             '</div>' +
             '<div class="input-group">' +
-              '<label class="input-group__label" for="experience">Experience level</label>' +
-              '<select class="input" id="experience">' +
+              '<label class="input-group__label">Preferred mode</label>' +
+              '<div class="checkbox-group">' +
+                '<label><input type="checkbox" name="preferred-mode" value="Remote"' + remoteChecked + '> Remote</label>' +
+                '<label><input type="checkbox" name="preferred-mode" value="Hybrid"' + hybridChecked + '> Hybrid</label>' +
+                '<label><input type="checkbox" name="preferred-mode" value="Onsite"' + onsiteChecked + '> Onsite</label>' +
+              '</div>' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<label class="input-group__label" for="experience-level">Experience level</label>' +
+              '<select id="experience-level" class="input">' +
                 '<option value="">Select level</option>' +
-                '<option value="entry">Entry</option>' +
-                '<option value="mid">Mid-level</option>' +
-                '<option value="senior">Senior</option>' +
-                '<option value="lead">Lead</option>' +
+                '<option value="Fresher"' + (expVal === 'Fresher' ? ' selected' : '') + '>Fresher</option>' +
+                '<option value="0-1"' + (expVal === '0-1' ? ' selected' : '') + '>0-1</option>' +
+                '<option value="1-3"' + (expVal === '1-3' ? ' selected' : '') + '>1-3</option>' +
+                '<option value="3-5"' + (expVal === '3-5' ? ' selected' : '') + '>3-5</option>' +
               '</select>' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<label class="input-group__label" for="skills">Skills (comma-separated)</label>' +
+              '<input id="skills" class="input" type="text" placeholder="e.g. React, Java, Python" value="' + skillsVal + '">' +
+            '</div>' +
+            '<div class="input-group slider-group">' +
+              '<label class="input-group__label" for="min-match-score">Minimum match score (0–100)</label>' +
+              '<input id="min-match-score" type="range" min="0" max="100" value="' + minVal + '">' +
+              '<span class="slider-group__value" id="min-match-score-value">' + minVal + '</span>' +
             '</div>' +
           '</div>' +
+          '<button type="button" class="btn btn--primary" id="save-preferences">Save preferences</button>' +
         '</div>' +
       '</section>'
     );
@@ -244,22 +391,29 @@
 
   function viewDashboard(filters) {
     var jobs = typeof JOBS !== 'undefined' ? JOBS : [];
+    var prefs = getPreferences();
+    prefsForScoring = prefs;
+    var jobsWithScores = jobs.map(function (j) {
+      return { job: j, matchScore: computeMatchScore(j, prefs) };
+    });
     var locations = getUniqueValues(jobs, 'location');
     var f = filters || {};
-    var filtered = filterJobs(jobs, f);
+    var filtered = filterJobs(jobsWithScores, f, prefs);
     var filterHtml = filterBarHtml(locations, f);
     var listHtml;
+    var noPrefsBanner = !hasPreferences() ? '<div class="prefs-banner">Set your preferences to activate intelligent matching.</div>' : '';
     if (filtered.length === 0) {
-      listHtml = '<div class="empty-state"><h2 class="empty-state__title">No jobs match your search.</h2></div>';
+      listHtml = '<div class="empty-state"><h2 class="empty-state__title">No roles match your criteria. Adjust filters or lower threshold.</h2></div>';
     } else {
-      listHtml = filtered.map(function (j) {
-        return jobCardHtml(j, isSaved(j.id), false);
+      listHtml = filtered.map(function (item) {
+        return jobCardHtml(item, isSaved(item.job.id), false);
       }).join('');
     }
     return (
       '<section class="route-view__content">' +
         '<h1 class="context-header__title">Dashboard</h1>' +
         '<p class="context-header__subtext">Browse and filter jobs. View details, save for later, or apply directly.</p>' +
+        noPrefsBanner +
         filterHtml +
         '<div class="job-list">' + listHtml + '</div>' +
       '</section>'
@@ -268,14 +422,18 @@
 
   function viewSaved() {
     var jobs = typeof JOBS !== 'undefined' ? JOBS : [];
+    var prefs = getPreferences();
+    prefsForScoring = prefs;
     var savedIds = getSavedIds();
-    var savedJobs = jobs.filter(function (j) { return savedIds.indexOf(j.id) >= 0; });
+    var savedJobs = jobs.filter(function (j) { return savedIds.indexOf(j.id) >= 0; }).map(function (j) {
+      return { job: j, matchScore: computeMatchScore(j, prefs) };
+    });
     var listHtml;
     if (savedJobs.length === 0) {
       listHtml = '<div class="empty-state"><h2 class="empty-state__title">Saved jobs</h2><p class="empty-state__message">Jobs you save for later will appear here.</p></div>';
     } else {
-      listHtml = savedJobs.map(function (j) {
-        return jobCardHtml(j, true, true);
+      listHtml = savedJobs.map(function (item) {
+        return jobCardHtml(item, true, true);
       }).join('');
     }
     return (
@@ -316,7 +474,7 @@
     );
   }
 
-  /* ─── Dashboard Filters (in-memory) ─────────────────────────────── */
+  /* ─── Dashboard Filters ─────────────────────────────────────────── */
   var dashboardFilters = {};
 
   function getFiltersFromDom() {
@@ -328,7 +486,8 @@
       mode: (root.querySelector('.filter-mode') || {}).value || '',
       experience: (root.querySelector('.filter-experience') || {}).value || '',
       source: (root.querySelector('.filter-source') || {}).value || '',
-      sort: (root.querySelector('.filter-sort') || {}).value || 'latest'
+      sort: (root.querySelector('.filter-sort') || {}).value || 'latest',
+      aboveThreshold: !!(root.querySelector('.filter-above-threshold') || {}).checked
     };
   }
 
@@ -349,6 +508,8 @@
     root.querySelectorAll('.filter-location, .filter-mode, .filter-experience, .filter-source, .filter-sort').forEach(function (el) {
       el.addEventListener('change', applyFiltersAndRender);
     });
+    var aboveEl = root.querySelector('.filter-above-threshold');
+    if (aboveEl) aboveEl.addEventListener('change', applyFiltersAndRender);
     var keywordEl = root.querySelector('.filter-keyword');
     if (keywordEl) {
       keywordEl.addEventListener('input', function () {
@@ -380,22 +541,11 @@
         var id = card && card.getAttribute('data-job-id');
         if (!id) return;
         var saved = isSaved(id);
-        if (saved) {
-          unsaveJob(id);
-        } else {
-          saveJob(id);
-        }
+        if (saved) unsaveJob(id);
+        else saveJob(id);
         var path = getPath();
-        if (path === '/saved') {
-          render();
-        } else {
-          var r = document.getElementById('root');
-          if (r) {
-            r.innerHTML = viewDashboard(dashboardFilters);
-            attachFilterListeners();
-            attachJobCardListeners();
-          }
-        }
+        if (path === '/saved') render();
+        else applyFiltersAndRender();
       });
     });
 
@@ -406,6 +556,47 @@
         if (href) window.open(href, '_blank', 'noopener');
       });
     });
+  }
+
+  /* ─── Settings mount ────────────────────────────────────────────── */
+  function attachSettingsListeners() {
+    var root = document.getElementById('root');
+    if (!root) return;
+    var rangeEl = root.querySelector('#min-match-score');
+    var valueEl = root.querySelector('#min-match-score-value');
+    if (rangeEl && valueEl) {
+      rangeEl.addEventListener('input', function () {
+        valueEl.textContent = rangeEl.value;
+      });
+    }
+    var saveBtn = root.querySelector('#save-preferences');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        var roleKeywords = (root.querySelector('#role-keywords') || {}).value || '';
+        var locSelect = root.querySelector('#preferred-locations');
+        var locs = [];
+        if (locSelect) {
+          for (var i = 0; i < locSelect.options.length; i++) {
+            if (locSelect.options[i].selected) locs.push(locSelect.options[i].value);
+          }
+        }
+        var modeCheckboxes = root.querySelectorAll('input[name="preferred-mode"]:checked');
+        var modes = [];
+        modeCheckboxes.forEach(function (cb) { modes.push(cb.value); });
+        var experienceLevel = (root.querySelector('#experience-level') || {}).value || '';
+        var skills = (root.querySelector('#skills') || {}).value || '';
+        var minMatchScore = parseInt((root.querySelector('#min-match-score') || {}).value || '40', 10) || 40;
+        savePreferences({
+          roleKeywords: roleKeywords.trim(),
+          preferredLocations: locs,
+          preferredMode: modes,
+          experienceLevel: experienceLevel,
+          skills: skills.trim(),
+          minMatchScore: Math.max(0, Math.min(100, minMatchScore))
+        });
+        navigate('/dashboard');
+      });
+    }
   }
 
   /* ─── Router ───────────────────────────────────────────────────── */
@@ -423,12 +614,14 @@
     '/saved': {
       view: function () { return viewSaved(); },
       title: 'Saved',
-      mount: function () {
-        attachJobCardListeners();
-      }
+      mount: function () { attachJobCardListeners(); }
     },
     '/digest': { view: function () { return viewDigest(); }, title: 'Digest' },
-    '/settings': { view: function () { return viewSettings(); }, title: 'Settings' },
+    '/settings': {
+      view: function () { return viewSettings(); },
+      title: 'Settings',
+      mount: function () { attachSettingsListeners(); }
+    },
     '/proof': { view: function () { return viewProof(); }, title: 'Proof' }
   };
 
@@ -487,9 +680,7 @@
     window.addEventListener('popstate', render);
 
     var menuBtn = document.getElementById('topbar-menu-btn');
-    if (menuBtn) {
-      menuBtn.addEventListener('click', toggleMobileNav);
-    }
+    if (menuBtn) menuBtn.addEventListener('click', toggleMobileNav);
 
     document.addEventListener('click', function (e) {
       var nav = document.getElementById('topbar-nav');
